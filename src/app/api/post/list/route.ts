@@ -24,32 +24,29 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   const db = client.db(DB_NAME);
   const collection = db.collection("posts");
 
-
   const total = await collection.countDocuments();
-
 
   const posts = await collection
     .aggregate([
-      { $sort: { createdAt: -1 } }, 
-      { $skip: skip }, 
-      { $limit: limitNum }, 
-
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limitNum },
 
       {
         $lookup: {
-          from: "comments", 
-          localField: "_id", 
+          from: "comments",
+          localField: "_id",
           foreignField: "postId",
-          as: "comments", 
+          as: "comments",
         },
       },
 
       {
         $lookup: {
-          from: "userLikes", 
+          from: "userLikes",
           localField: "_id",
           foreignField: "postId",
-          as: "likes", 
+          as: "likes",
         },
       },
 
@@ -66,13 +63,10 @@ export const GET = withApiHandler(async (request: NextRequest) => {
 
           isLiked: {
             $cond: {
-              if: { $eq: [currentUserObjectId, null] }, 
+              if: { $eq: [currentUserObjectId, null] },
               then: false,
               else: {
-                $in: [
-                  currentUserObjectId, 
-                  "$likes.userId",
-                ],
+                $in: [currentUserObjectId, "$likes.userId"],
               },
             },
           },

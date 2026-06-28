@@ -13,11 +13,40 @@ const LikeButton = ({ postId, likeCount, isLiked }: LikeButtonProps) => {
   const queryClient = useQueryClient();
   const { mutate: toggleLikeMutate, isPending } = useMutation({
     mutationFn: toggleLike,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts", currentPage] });
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["posts", currentPage] });
+      const previousPostData = queryClient.getQueryData(["posts", currentPage]);
+      queryClient.setQueryData(["posts", currentPage], (old: any) => {
+        if (!old || !old.posts) return old;
+        return {
+          ...old,
+          posts: old.posts.map((post: any) => {
+            if (post._id === postId) {
+              return {
+                ...post,
+                isLiked: !post.isLiked,
+                likeCount: post.isLiked
+                  ? post.likeCount - 1
+                  : post.likeCount + 1,
+              };
+            }
+            return post;
+          }),
+        };
+      });
+      return { previousPostData };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _, context) => {
+      if (context?.previousPostData) {
+        queryClient.setQueryData(
+          ["posts", currentPage],
+          context.previousPostData,
+        );
+      }
       alert(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts", currentPage] });
     },
   });
 
@@ -28,7 +57,6 @@ const LikeButton = ({ postId, likeCount, isLiked }: LikeButtonProps) => {
     <div className="mt-4 flex items-center gap-2 text-sm">
       <button
         className="rounded-md px-2 py-1 text-gray-600 hover:bg-gray-100 hover:text-blue-600"
-        disabled={isPending}
         onClick={onToggleLike}
       >
         {isLiked ? "❤️" : "🤍"} {likeCount}
