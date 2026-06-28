@@ -7,12 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prettier":"prettier -w src"
+    "prettier": "prettier -w src"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",
     "@tanstack/react-query": "^5.101.0",
     "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.4.0",
     "next": "16.2.7",
     "prettier": "^3.8.4",
     "react": "19.2.4",
